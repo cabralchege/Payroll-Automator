@@ -8,13 +8,13 @@ import re
 import logging
 
 # Import modules
-from main import calculate_payroll
+from payroll_calculator import calculate_payroll
 from generate_pdf import generate_payslip_pdf
 from models import db, Employee, Payroll
 
 # Create Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'simple-payroll-key-2025'
+app.config['SECRET_KEY'] = 'automated-payroll-key-2025'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///payroll.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -113,15 +113,16 @@ def index():
                 period=period,
                 gross_salary=float(payroll_data['gross_salary']),
                 nssf=float(payroll_data['nssf']),
+                shif=float(payroll_data['shif']),
                 ahl=float(payroll_data['ahl']),
                 paye=float(payroll_data['paye']),
-                shif=float(payroll_data['shif']),
+               
                 net_pay=float(payroll_data['net_pay'])
             )
             db.session.add(payroll)
             db.session.commit()
             
-            flash(f'✅ Employee {first_name} {last_name} added successfully!<br>💰 Net Pay: KSh {payroll_data["net_pay"]:,.0f}', 'success')
+            flash(f'Employee {first_name} {last_name} added successfully!<br>Net Pay: KSh {payroll_data["net_pay"]:,.0f}', 'success')
             return redirect(url_for('index', period=period))
         
         except Exception as e:
@@ -217,6 +218,4 @@ def generate_p10(period):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # Ensure tables are created
-    print("🚀 Starting Kenyan Payroll Calculator...")
-    print("🌐 Open your browser at: http://localhost:5000")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False)
