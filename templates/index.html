@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PayrollKE - Modern Kenyan Payroll System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-calculator"></i>
+            <p>Calculating payroll...</p>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <i class="fas fa-file-invoice-dollar logo-icon"></i>
+                    <h1 class="logo-text">Payroll<span class="accent">KE</span></h1>
+                </div>
+                <div class="header-meta">
+                    <span class="period-badge">{{ period }}</span>
+                    <div class="stats">
+                        <span class="stat-item">{{ employees|length }} <small>Employees</small></span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="message-container">
+                        {% for category, message in messages %}
+                            <div class="message message--{{ 'error' if category == 'error' else 'success' }}" role="alert">
+                                <div class="message-icon">
+                                    <i class="fas {{ 'fa-check-circle' if category == 'success' else 'fa-exclamation-triangle' }}"></i>
+                                </div>
+                                <div class="message-content">
+                                    <div class="message-text">{{ message | safe }}</div>
+                                </div>
+                                <button class="message-close" aria-label="Close">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- Employee Form Section -->
+            <section class="form-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-user-plus icon"></i>
+                        Add New Employee
+                    </h2>
+                    <p class="section-subtitle">Enter employee details and calculate payroll automatically</p>
+                </div>
+
+                <form method="POST" id="employeeForm" class="employee-form" novalidate>
+                    <div class="form-grid">
+                        <!-- Employee ID -->
+                        <div class="form-group">
+                            <label for="employee_id" class="form-label">
+                                <i class="fas fa-id-card label-icon"></i>
+                                Employee ID <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="employee_id" 
+                                name="employee_id" 
+                                class="form-input" 
+                                placeholder="EMP001"
+                                maxlength="20"
+                                required
+                                autocomplete="off"
+                            >
+                            <div class="form-hint">Unique identifier for the employee</div>
+                        </div>
+
+                        <!-- KRA PIN -->
+                        <div class="form-group">
+                            <label for="kra_pin" class="form-label">
+                                <i class="fas fa-shield-alt label-icon"></i>
+                                KRA PIN <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="kra_pin" 
+                                name="kra_pin" 
+                                class="form-input" 
+                                placeholder="A123456789B"
+                                maxlength="11"
+                                required
+                                autocomplete="off"
+                            >
+                            <div class="form-hint">Format: AXXXXXXXXY (A + 9 digits + Letter)</div>
+                        </div>
+
+                        <!-- Names Row -->
+                        <div class="form-group">
+                            <label for="first_name" class="form-label">
+                                <i class="fas fa-user label-icon"></i>
+                                First Name <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="first_name" 
+                                name="first_name" 
+                                class="form-input" 
+                                required
+                                autocomplete="given-name"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="middle_name" class="form-label">
+                                Middle Name
+                            </label>
+                            <input 
+                                type="text" 
+                                id="middle_name" 
+                                name="middle_name" 
+                                class="form-input"
+                                autocomplete="additional-name"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="last_name" class="form-label">
+                                Last Name <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="last_name" 
+                                name="last_name" 
+                                class="form-input" 
+                                required
+                                autocomplete="family-name"
+                            >
+                        </div>
+
+                        <!-- Basic Salary -->
+                        <div class="form-group form-group--full">
+                            <label for="basic_salary" class="form-label">
+                                <i class="fas fa-money-bill-wave label-icon"></i>
+                                Basic Salary (KSh) <span class="required">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-prefix">KSh</span>
+                                <input 
+                                    type="number" 
+                                    id="basic_salary" 
+                                    name="basic_salary" 
+                                    class="form-input" 
+                                    placeholder="40000"
+                                    step="0.01" 
+                                    min="10000" 
+                                    max="1000000"
+                                    required
+                                    autocomplete="off"
+                                >
+                            </div>
+                            <div class="form-hint">Monthly basic salary amount (min: 10,000)</div>
+                        </div>
+                    </div>
+
+                    <!-- Benefits Section -->
+                    <div class="benefits-section">
+                        <div class="section-header">
+                            <h3 class="section-title--small">
+                                <i class="fas fa-briefcase icon"></i>
+                                Additional Benefits
+                            </h3>
+                            <p class="section-subtitle--small">Add housing, transport, or other allowances</p>
+                        </div>
+
+                        <div class="benefits-container" id="benefits-container">
+                            <div class="benefit-row" data-index="0">
+                                <div class="benefit-inputs">
+                                    <input 
+                                        type="text" 
+                                        class="benefit-name form-input" 
+                                        placeholder="Benefit name (e.g., Housing Allowance)"
+                                        maxlength="50"
+                                    >
+                                    <div class="input-group">
+                                        <span class="input-prefix">KSh</span>
+                                        <input 
+                                            type="number" 
+                                            class="benefit-amount form-input" 
+                                            placeholder="0.00"
+                                            step="0.01" 
+                                            min="0"
+                                            autocomplete="off"
+                                        >
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn--ghost btn--remove" title="Remove benefit">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="button" id="add-benefit" class="btn btn--outline btn--add">
+                            <i class="fas fa-plus"></i> Add Another Benefit
+                        </button>
+
+                        <!-- Benefits Summary -->
+                        <div class="benefits-summary" id="benefits-summary">
+                            <div class="summary-row">
+                                <span class="summary-label">Total Benefits:</span>
+                                <span class="summary-value" id="total-benefits">KSh 0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden field for benefits data -->
+                    <input type="hidden" name="benefits_data" id="benefits-data" value="[]">
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="reset" class="btn btn--ghost">
+                            <i class="fas fa-undo"></i> Reset Form
+                        </button>
+                        <button type="submit" class="btn btn--primary btn--large">
+                            <i class="fas fa-calculator"></i>
+                            <span class="btn-text">Calculate & Add Employee</span>
+                            <div class="btn-loader" style="display: none;">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </div>
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Employees Table Section -->
+            <section class="table-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-table icon"></i>
+                        Employee Records
+                    </h2>
+                    <div class="section-actions">
+                        {% if employees %}
+                        <a href="{{ url_for('generate_p10', period=period) }}" 
+                           class="btn btn--secondary btn--icon" 
+                           download
+                           title="Download KRA P10 Report">
+                            <i class="fas fa-file-csv"></i>
+                            <span>Export P10</span>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if employees %}
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th><div>ID</div></th>
+                                <th><div>Name</div></th>
+                                <th><div>PIN</div></th>
+                                <th><div>Basic</div></th>
+                                <th><div>Gross</div></th>
+                                <th><div>Net Pay</div></th>
+                                <th><div>Action</div></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for employee in employees %}
+                                {% set payroll = employee.payrolls|selectattr('period', 'equalto', period)|list|first %}
+                                <tr class="{% if not payroll %}row--inactive{% endif %}">
+                                    <td class="cell--id">{{ employee.id }}</td>
+                                    <td class="cell--name">{{ employee.full_name() }}</td>
+                                    <td class="cell--pin">{{ employee.kra_pin }}</td>
+                                    <td class="cell--amount">KSh {{ "%.0f"|format(employee.basic_salary) }}</td>
+                                    <td class="cell--amount {% if payroll %}cell--highlight{% endif %}">
+                                        {% if payroll %}
+                                            KSh {{ "%.0f"|format(payroll.gross_salary) }}
+                                        {% else %}
+                                            <span class="text--muted">Not calculated</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="cell--amount cell--net {% if payroll %}cell--highlight{% endif %}">
+                                        {% if payroll %}
+                                            <strong>KSh {{ "%.0f"|format(payroll.net_pay) }}</strong>
+                                        {% else %}
+                                            <span class="text--muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="cell--actions">
+                                        {% if payroll %}
+                                            <a href="{{ url_for('generate_payslip', employee_id=employee.id, period=period) }}" 
+                                              class="btn btn-outline-primary" title="Download Payslip">
+                                              <i class="fas fa-file-pdf"></i>
+                                            </a>
+                                        {% else %}
+                                            <span class="text--muted small">Calculate first</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State -->
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-users-slash"></i>
+                    </div>
+                    <h3 class="empty-state-title">No Employees Yet</h3>
+                    <p class="empty-state-subtitle">Add your first employee using the form above to get started</p>
+                    <div class="empty-state-actions">
+                        <button type="button" class="btn btn--primary" onclick="document.querySelector('.form-section').scrollIntoView({behavior: 'smooth'})">
+                            <i class="fas fa-plus"></i> Add First Employee
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="logo-section">
+                        <i class="fas fa-file-invoice-dollar logo-icon"></i>
+                        <span class="logo-text">Payroll<span class="accent">KE</span></span>
+                    </div>
+                    <p class="footer-text">Modern Kenyan Payroll System • Compliant with 2025 Tax Laws</p>
+                </div>
+                <div class="footer-section">
+                    <h4 class="footer-title">Features</h4>
+                    <ul class="footer-links">
+                        <li><a href="#" class="footer-link"><i class="fas fa-calculator"></i> Auto Calculations</a></li>
+                        <li><a href="#" class="footer-link"><i class="fas fa-file-pdf"></i> PDF Payslips</a></li>
+                        <li><a href="#" class="footer-link"><i class="fas fa-file-csv"></i> KRA P10 Export</a></li>
+                        <li><a href="#" class="footer-link"><i class="fas fa-shield-alt"></i> Tax Compliant</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 PayrollKE. All rights reserved. Built with ❤️ for Kenyan businesses.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
