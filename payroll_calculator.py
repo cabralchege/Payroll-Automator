@@ -68,18 +68,6 @@ def calculate_payroll(employee_data, period):
         'net_pay': round(net_pay, 2)
     }
 
-# # Test the calculator
-if __name__ == "__main__":
-    test_data = {
-        'basic_salary': 40000,
-        'benefits': [{'amount': 10000}]
-    }
-    result = calculate_payroll(test_data, "2025-09")
-    print("Test Payroll Calculation:")
-    for key, value in result.items():
-        if isinstance(value, (int, float)):
-            print(f"{key}: KSh {value:,.2f}")
-        else:
-            print(f"{key}: {value}")
+
 
 
