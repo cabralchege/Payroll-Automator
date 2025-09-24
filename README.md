@@ -19,22 +19,22 @@ The main goal of this project is to:
 
 ## Usage
 1. Run locally
- - Clone this repository:
-   ```git clone https://github.com/cabralchege/Payroll-Automator```
-   ```cd Payroll_Automator```
+ - Clone this repository:  
+   ```git clone https://github.com/cabralchege/Payroll-Automator```  
+   ```cd Payroll_Automator```  
 
- - Create and activate a virtual environment:
-  ```python -m venv venv```
-  ```source venv/bin/activate``` # For Linux/ Mac users
-  ```venv\Scripts\activate```    # For windows users
+ - Create and activate a virtual environment:  
+  ```python -m venv venv```  
+  ```source venv/bin/activate``` # For Linux/ Mac users  
+  ```venv\Scripts\activate```    # For windows users  
 
-  - Install dependencies:
-  ```pip install -r requirements.txt```
+  - Install dependencies:  
+  ```pip install -r requirements.txt```  
 
-  - Start the Flask app:
-  ```python app.py```
+  - Start the Flask app:  
+  ```python app.py```  
 
-  - Open your browser at [Local host](http://127.0.0.1:5000)
+  - Open your browser at [Local host](http://127.0.0.1:5000)  
 ## Project Structure
 
 ## Technical Details
