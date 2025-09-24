@@ -1,11 +1,13 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file
-from datetime import datetime
 import os
 import csv
 import json
-from io import StringIO, BytesIO
 import re
 import logging
+from datetime import datetime
+from io import StringIO, BytesIO
+from flask import Flask, request, render_template, redirect, url_for, flash, send_file
+
+
 
 # Import modules
 from payroll_calculator import calculate_payroll
@@ -158,6 +160,7 @@ def generate_payslip(employee_id, period):
         logger.error(f"Error generating payslip for {employee_id}: {str(e)}", exc_info=True)
         flash(f'Error generating payslip: {str(e)}', 'error')
         return redirect(url_for('index'))
+    
 @app.route('/generate_p10/<period>')
 def generate_p10(period):
     """Generate KRA P10 CSV report"""
@@ -214,6 +217,22 @@ def generate_p10(period):
         flash(f'Error generating P10 report: {str(e)}', 'error')
         print(f"P10 Error: {e}")
         return redirect(url_for('index'))
+
+@app.route('/clear_employees', methods=['POST'])
+def clear_employees():
+    try:
+        # Delete all payroll records first (foreign key constraint safety)
+        Payroll.query.delete()
+        # Delete all employees
+        Employee.query.delete()
+        db.session.commit()
+        flash("All employee records have been cleared.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error clearing employee records: {str(e)}", "error")
+    return redirect(url_for('index'))
+
+
 
 if __name__ == '__main__':
     with app.app_context():

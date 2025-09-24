@@ -633,12 +633,28 @@ body.no-scroll {
     padding: 1rem 2rem;
     font-size: var(--font-size-base);
 }
+/* Danger button for clearing records */
+.btn--danger {
+    background: var(--color-error);
+    color: #fff;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.btn--danger:hover {
+    background: #b02a37;
+}
+.records-actions {
+    margin-bottom: 0.75rem;
+    text-align: center;
+}
 
 .btn--pdf {
     background: #dc3545;
     color: var(--color-white);
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 4.5rem;
+    height: 4.5rem;
     border-radius: 50%;
     display: flex;
     align-items: center;

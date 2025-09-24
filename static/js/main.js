@@ -495,3 +495,17 @@ if ('serviceWorker' in navigator) {
             .catch(error => console.log('SW registration failed'));
     });
 }
+
+// Clear payroll form handling: prevent double submit and show confirm handled inline
+document.addEventListener('DOMContentLoaded', function() {
+    var clearForm = document.getElementById('clear-payroll-form');
+    if (clearForm) {
+        clearForm.addEventListener('submit', function(e) {
+            var btn = clearForm.querySelector('button[type="submit"]');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Clearing...';
+            }
+        });
+    }
+});

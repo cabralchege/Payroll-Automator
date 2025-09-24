@@ -331,6 +331,20 @@
                 </div>
                 {% endif %}
             </section>
+
+            <section>
+                <!-- Clearing records -->
+                <div class="records-actions" style="margin-bottom: 0.75rem; text-align: center;">
+                    <form id="clear-employees-form" action="{{ url_for('clear_employees') }}" method="POST" 
+                          onsubmit="return confirm('Are you sure you want to DELETE ALL employee records? This cannot be undone.');" 
+                          style="display:inline-block;">
+                        <button type="submit" class="btn btn--secondary btn--danger">
+                            <i class="fas fa-user-slash"></i> Clear All Employees
+                        </button>
+                    </form>
+                </div>
+
+            </section>
         </main>
 
         <!-- Footer -->
