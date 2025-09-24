@@ -1,7 +1,7 @@
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import cm
+from reportlab.lib.units import mm
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from io import BytesIO
@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 def generate_payslip_pdf(employee, payroll):
-    """Generate professional PDF payslip with enhanced error handling."""
+    """Generate professional PDF payslip."""
     try:
         logger.debug(f"Generating payslip for employee {employee.id}, period {payroll.period}")
         
@@ -22,10 +22,10 @@ def generate_payslip_pdf(employee, payroll):
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
-            rightMargin=2*cm,
-            leftMargin=2*cm,
-            topMargin=2*cm,
-            bottomMargin=2*cm
+            rightMargin= 20 * mm,
+            leftMargin= 20 * mm,
+            topMargin= 15 * mm,
+            bottomMargin= 15 * mm,
         )
 
         # Styles
@@ -33,27 +33,42 @@ def generate_payslip_pdf(employee, payroll):
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Heading1'],
+            fontName ="Helvetica-Bold",
             fontSize=16,
-            spaceAfter=30,
-            alignment=TA_CENTER,
-            textColor=colors.darkblue
+            leading= 20,
+        )
+        section_style = ParagraphStyle(
+            'section',
+            parent=styles['Heading4'],
+            fontName="Helvetica-Bold",
+            fontSize=10,
+            leading=12
+        )
+        normal_style = ParagraphStyle(
+            'normal',
+            parent=styles['Normal'],
+            fontName='Helvetica',
+            fontSize=9.5,
         )
         footer_style = ParagraphStyle(
             'Footer',
             parent=styles['Normal'],
-            fontSize=10,
-            alignment=TA_CENTER,
-            spaceBefore=12,
-            textColor=colors.grey
+            fontSize=8,
+            leading=12,
         )
 
         # Content
         story = []
 
+        # Containerizing the payslip
+        container_width = 200
+        col1 = int(container_width * 0.45)
+        col2 = container_width - col1
+
         # Header
-        story.append(Paragraph("KENYAN PAYROLL SYSTEM", title_style))
-        story.append(Paragraph(f"EMPLOYEE PAYSLIP - {payroll.period}", styles['Heading2']))
-        story.append(Spacer(1, 12))
+        story.append(Paragraph(f"Payslip {payroll.period}", title_style))
+        # story.append(Paragraph(f"EMPLOYEE PAYSLIP - {payroll.period}", styles['Heading2']))
+        story.append(Spacer(1, 6))
 
         # Employee Details Table
         emp_data = [
@@ -63,77 +78,82 @@ def generate_payslip_pdf(employee, payroll):
             ['Period:', payroll.period or 'N/A'],
             ['Generated:', datetime.now().strftime('%d/%m/%Y')]
         ]
-        emp_table = Table(emp_data, colWidths=[3*cm, 11*cm])
+        emp_table = Table(emp_data, colWidths=[col1, col2], hAlign="LEFT")
         emp_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey)
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+            ('LEFTPADDING', (1, 0), (1, -1), 6),
+            ('RIGHTPADDING', (1, 0), (1, -1), 4),
+            ('FONTSIZE', (0, 0), (-1, -1), 9.5),
+            ('VALIGN', (0, 0), (-1, 1), 'MIDDLE')
         ]))
         story.append(emp_table)
-        story.append(Spacer(1, 12))
+        story.append(Spacer(1, 6))
 
-        # Earnings Table
+        # Paymeant breakdown
         benefits_total = payroll.gross_salary - employee.basic_salary
         earnings_data = [
-            ['DESCRIPTION', 'AMOUNT (KSh)'],
+            # ['DESCRIPTION', 'AMOUNT (KSh)'],
             ['Basic Salary', f"{employee.basic_salary:,.2f}"],
             ['Total Benefits', f"{benefits_total:,.2f}"],
-            ['GROSS SALARY', f"{payroll.gross_salary:,.2f}"]
+            ['Gross Salary', f"{payroll.gross_salary:,.2f}"],
+            ['(Less) NSSF Deduction', f"{payroll.nssf:,.2f}"],
+            ['(Less) Housing Levy Deduction', f"{payroll.ahl:,.2f}"],
+            ['(Less) SHIF Deduction', f"{payroll.shif:,.2f}"],
         ]
-        earnings_table = Table(earnings_data, colWidths=[8*cm, 6*cm])
+        earnings_table = Table(earnings_data, colWidths=[col1, col2])
         earnings_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-            ('BACKGROUND', (0, -1), (-1, -1), colors.beige)
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+            ('LEFTPADDING', (1, 0), (1, -1), 4),
+            ('RIGHTPADDING', (1, 0), (1, -1), 6),
+            ('FONTSIZE', (0, 0), (-1, -1), 9.5),
+            ('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.white, colors.HexColor('#F7F7F8')])
         ]))
-        story.append(Paragraph("EARNINGS", styles['Heading3']))
+        story.append(Paragraph("Payment Breakdown", section_style))
         story.append(earnings_table)
-        story.append(Spacer(1, 12))
+        story.append(Spacer(1, 6))
 
         # Deductions Table
         total_deductions = payroll.nssf + payroll.ahl + payroll.paye + payroll.shif
         deductions_data = [
-            ['DEDUCTION', 'AMOUNT (KSh)'],
-            ['NSSF', f"{payroll.nssf:,.2f}"],
-            ['AHL (Housing Levy)', f"{payroll.ahl:,.2f}"],
-            ['PAYE (Income Tax)', f"{payroll.paye:,.2f}"],
-            ['SHIF', f"{payroll.shif:,.2f}"],
-            ['TOTAL DEDUCTIONS', f"{total_deductions:,.2f}"]
+            # ['DEDUCTION', 'AMOUNT (KSh)'],
+            ['Net Paye ', f"{payroll.paye:,.2f}"],
+            ['NSSF Deduction', f"{payroll.nssf:,.2f}"],
+            ['Housing Levy Deduction', f"{payroll.ahl:,.2f}"],
+            ['SHIF Deduction', f"{payroll.shif:,.2f}"],
+            ['Total Deductions', f"{total_deductions:,.2f}"]
         ]
-        deductions_table = Table(deductions_data, colWidths=[8*cm, 6*cm])
+        deductions_table = Table(deductions_data, colWidths=[col1, col2])
         deductions_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-            ('BACKGROUND', (0, -1), (-1, -1), colors.lightcoral)
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+            ("FONTSIZE", (0, 0), (-1, -1), 9.5),
+            ("ROWBACKGROUNDS", (0, 0), (-1, -1), [colors.white, colors.HexColor("#f7f7f8")]),
+            ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
+            ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#efefef")),
+            ("LINEABOVE", (0, -1), (-1, -1), 0.4, colors.grey),
         ]))
-        story.append(Paragraph("DEDUCTIONS", styles['Heading3']))
+        # story.append(Paragraph("DEDUCTIONS", styles['Heading3']))
         story.append(deductions_table)
-        story.append(Spacer(1, 12))
+        story.append(Spacer(1, 6))
 
         # Net Pay
         net_data = [
-            ['NET PAY', f"{payroll.net_pay:,.2f}"]
+            ['Net Pay', f"{payroll.net_pay:,.2f}"]
         ]
-        net_table = Table(net_data, colWidths=[8*cm, 6*cm])
+        net_table = Table(net_data, colWidths=[col1, col2])
         net_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 12),
-            ('GRID', (0, 0), (-1, -1), 2, colors.darkgreen),
-            ('BACKGROUND', (0, 0), (-1, -1), colors.lightgreen)
+            ('FONTSIZE', (0, 0), (-1, -1), 10.5),
+            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#efefef")),
+            ("LEFTPADDING", (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 6),
         ]))
         story.append(net_table)
-        story.append(Spacer(1, 24))
+        story.append(Spacer(1, 6))
 
         # Footer
         footer = Paragraph(
