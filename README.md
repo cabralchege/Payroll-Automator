@@ -83,6 +83,8 @@ The requirements can be found in the requirements.txt
 - Produces professional looking payslips in pdf fomat.
 - Generates an uploadable P10 csv that can be used for filing PAYE monthly.
 
+## Blog
+You can read more on this blog (here)[https://thecabralperspective.hashnode.dev/how-i-built-an-automated-payroll-system-in-python-and-flask]
 ## Contact
 For questions or collaboration, contact cabralowiro@gmail.com or open an issue on the repo
 
