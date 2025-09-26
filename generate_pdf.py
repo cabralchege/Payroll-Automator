@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 def generate_payslip_pdf(employee, payroll):
-    """Generate professional PDF payslip."""
+    """Generate PDF payslip."""
     try:
         logger.debug(f"Generating payslip for employee {employee.id}, period {payroll.period}")
         
@@ -67,7 +67,6 @@ def generate_payslip_pdf(employee, payroll):
 
         # Header
         story.append(Paragraph(f"Payslip {payroll.period}", title_style))
-        # story.append(Paragraph(f"EMPLOYEE PAYSLIP - {payroll.period}", styles['Heading2']))
         story.append(Spacer(1, 6))
 
         # Employee Details Table
@@ -101,12 +100,13 @@ def generate_payslip_pdf(employee, payroll):
             ['(Less) Housing Levy Deduction', f"{payroll.ahl:,.2f}"],
             ['(Less) SHIF Deduction', f"{payroll.shif:,.2f}"],
         ]
-        earnings_table = Table(earnings_data, colWidths=[col1, col2])
+        earnings_table = Table(earnings_data, colWidths=[col1, col2], hAlign='LEFT')
         earnings_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
             ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-            ('LEFTPADDING', (1, 0), (1, -1), 4),
-            ('RIGHTPADDING', (1, 0), (1, -1), 6),
+            ('LEFTPADDING', (1, 0), (1, -1), 6),
+            ('RIGHTPADDING', (1, 0), (1, -1), 4),
             ('FONTSIZE', (0, 0), (-1, -1), 9.5),
             ('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.white, colors.HexColor('#F7F7F8')])
         ]))
@@ -124,9 +124,10 @@ def generate_payslip_pdf(employee, payroll):
             ['SHIF Deduction', f"{payroll.shif:,.2f}"],
             ['Total Deductions', f"{total_deductions:,.2f}"]
         ]
-        deductions_table = Table(deductions_data, colWidths=[col1, col2])
+        deductions_table = Table(deductions_data, colWidths=[col1, col2], hAlign='LEFT')
         deductions_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
             ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
             ("FONTSIZE", (0, 0), (-1, -1), 9.5),
             ("ROWBACKGROUNDS", (0, 0), (-1, -1), [colors.white, colors.HexColor("#f7f7f8")]),
@@ -142,9 +143,10 @@ def generate_payslip_pdf(employee, payroll):
         net_data = [
             ['Net Pay', f"{payroll.net_pay:,.2f}"]
         ]
-        net_table = Table(net_data, colWidths=[col1, col2])
+        net_table = Table(net_data, colWidths=[col1, col2], hAlign='LEFT')
         net_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
             ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, -1), 10.5),

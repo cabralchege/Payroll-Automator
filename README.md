@@ -4,10 +4,7 @@ This repository contains a Flask-based payroll automation system that calculates
 
 The project is designed to eliminate manual errors, save processing time, and ensure regulatory compliance for SMEs, accounting firms, and HR departments.
 ### Goal
-The main goal of this project is to:
-1. Obtain the titles and prices of at least 10 books.
-2. Convert book prices from foreign currency (GBP) into a local currency (KES) for easier analysis.
-3. Store the results in a JSON file.
+
 
 ## Features
 
@@ -36,6 +33,14 @@ The main goal of this project is to:
 
   - Open your browser at [Local host](http://127.0.0.1:5000)  
 ## Project Structure
+/Payroll-Automator
+│── app.py              # Flask web app entry point
+│── generate_pdf.py     # Handles payslip generation with ReportLab
+│── requirements.txt    # Project dependencies
+│── README.md           # Documentation
+│── /templates          # HTML templates for Flask
+│── /static             # CSS and JS files
+│── models.py           # Database models
 
 ## Technical Details
 

@@ -9,6 +9,22 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <h1>Payroll Automator</h1>
+        </div>
+        <div class="nav-right">
+            {% if current_user.is_authenticated %}
+                <span>Welcome, {{ current_user.full_name }}</span>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Login</a>
+                <a href="{{ url_for('register') }}">Register</a>
+            {% endif %}
+        </div>
+    </nav>
+    
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="loading-overlay">
         <div class="loading-spinner">
@@ -32,6 +48,7 @@
                     </div>
                 </div>
             </div>
+
         </header>
 
         <main class="main-content">

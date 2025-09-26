@@ -6,13 +6,15 @@ import logging
 from datetime import datetime
 from io import StringIO, BytesIO
 from flask import Flask, request, render_template, redirect, url_for, flash, send_file
+from flask_login import login_manager, login_user, login_required, logout_user,current_user, LoginManager
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 
 # Import modules
 from payroll_calculator import calculate_payroll
 from generate_pdf import generate_payslip_pdf
-from models import db, Employee, Payroll
+from models import db, Employee, Payroll, User
 
 # Create Flask app
 app = Flask(__name__)
@@ -25,15 +27,79 @@ logger = logging.getLogger(__name__)
 # Initialize SQLAlchemy with the app
 db.init_app(app)
 
+# initializing login manager
+login_manager = LoginManager()
+login_manager.login_view = "login"
+login_manager.init_app(app)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+# Register
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        email = request.form.get('email').strip().lower()
+        password = request.form.get('password')
+        name = request.form.get('full_name', '').strip()
+
+        if not email or not password:
+            flash("Email and password required", "error")
+            return render_template('register.html')
+
+        if User.query.filter_by(email=email).first():
+            flash("Email already registered. Please login.", "error")
+            return redirect(url_for('login'))
+
+        user = User(email=email, full_name=name)
+        user.set_password(password)
+        # Optionally make the first created user admin
+        if User.query.count() == 0:
+            user.is_admin = True
+
+        db.session.add(user)
+        db.session.commit()
+        flash("Registration successful. Please log in.", "success")
+        return redirect(url_for('login'))
+
+    return render_template('register.html')
+
+# Login
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form.get('email').strip().lower()
+        password = request.form.get('password')
+        user = User.query.filter_by(email=email).first()
+        if not user or not user.check_password(password):
+            flash("Invalid credentials", "error")
+            return render_template('login.html')
+        login_user(user)
+        flash("Logged in successfully", "success")
+        return redirect(url_for('index'))
+    return render_template('login.html')
+
+# Logout
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash("You have been logged out.", "success")
+    return redirect(url_for('login'))
+
 # Create tables
 with app.app_context():
     db.create_all()
 
 @app.route('/', methods=['GET', 'POST'])
+@login_required
 def index():
-    """Main page - Add employee and generate reports"""
-    employees = Employee.query.all()
     period = request.args.get('period', f"{datetime.now().strftime('%Y-%m')}")
+    if current_user.is_admin:
+        employees = Employee.query.all()
+    else:
+        employees = Employee.query.filter_by(user_id=current_user.id).all()
     
     # Handle form submission
     if request.method == 'POST':
@@ -53,8 +119,8 @@ def index():
         # Validate salary
         try:
             basic_salary = float(basic_salary_str)
-            if basic_salary < 10000 or basic_salary > 1000000:
-                flash('Salary must be between KSh 10,000 and KSh 1,000,000', 'error')
+            if basic_salary < 0 :
+                flash('Salary cannot be negative', 'error')
                 return render_template('index.html', employees=employees, period=period)
         except ValueError:
             flash('Please enter a valid salary amount.', 'error')
@@ -62,7 +128,7 @@ def index():
         
         # Validate KRA PIN format
         if not re.match(r'^A\d{9}[A-Z]$', kra_pin):
-            flash('Invalid KRA PIN format. Use: P051XXXXXXXXX', 'error')
+            flash('Invalid KRA PIN format. Use: AXXXXXXXXXX', 'error')
             return render_template('index.html', employees=employees, period=period)
         
         try:
@@ -79,7 +145,8 @@ def index():
                 first_name=first_name,
                 middle_name=middle_name or '',
                 last_name=last_name,
-                basic_salary=basic_salary
+                basic_salary=basic_salary,
+                user_id=current_user.id
             )
             db.session.add(employee)
             db.session.commit()
@@ -118,7 +185,7 @@ def index():
                 shif=float(payroll_data['shif']),
                 ahl=float(payroll_data['ahl']),
                 paye=float(payroll_data['paye']),
-               
+              
                 net_pay=float(payroll_data['net_pay'])
             )
             db.session.add(payroll)
@@ -141,10 +208,14 @@ def generate_payslip(employee_id, period):
         logger.debug(f"Attempting to generate payslip for employee_id: {employee_id}, period: {period}")
         employee = Employee.query.get_or_404(employee_id)
         payroll = Payroll.query.filter_by(employee_id=employee_id, period=period).first()
-        
+
         if not payroll:
             logger.warning(f"No payroll data found for employee {employee_id} in period {period}")
             flash('No payroll data found for this period. Please calculate payroll first.', 'error')
+            return redirect(url_for('index'))
+        
+        if not current_user.is_admin and payroll.employee.user_id != current_user.id:
+            flash('You are not authorized to view this payslip.', 'error')
             return redirect(url_for('index'))
         
         # Generate PDF
@@ -165,7 +236,11 @@ def generate_payslip(employee_id, period):
 def generate_p10(period):
     """Generate KRA P10 CSV report"""
     try:
-        payroll_records = db.session.query(Payroll).join(Employee).filter(Payroll.period == period).all()
+        if current_user.is_admin or Employee.user_id == current_user.id:
+            payroll_records = db.session.query(Payroll).join(Employee).filter(Payroll.period == period).all()
+        else:
+            payroll_records = db.session.query(Payroll).join(Employee).filter(
+                Payroll.period == period, Employee.user_id == current_user.id).all()
         
         if not payroll_records:
             flash('No payroll data for this period', 'error')
@@ -219,13 +294,21 @@ def generate_p10(period):
         return redirect(url_for('index'))
 
 @app.route('/clear_employees', methods=['POST'])
+@login_required
 def clear_employees():
     try:
-        # Delete all payroll records first (foreign key constraint safety)
-        Payroll.query.delete()
-        # Delete all employees
-        Employee.query.delete()
-        db.session.commit()
+        if current_user.is_admin:
+            # Admin: Delete all records from the Payroll table.
+            deleted_count = db.session.query(Employee).delete()
+            entity_name = "payroll"
+        else:
+            # Regular User: Delete only payrolls for employees they own.
+            # This joins Payroll with Employee and filters by the current user's ID.
+            deleted_count = db.session.query(Payroll).join(Employee).filter(
+                Employee.user_id == current_user.id
+            ).delete(synchronize_session=False)
+            entity_name = "employee"
+        db.session.commit() 
         flash("All employee records have been cleared.", "success")
     except Exception as e:
         db.session.rollback()

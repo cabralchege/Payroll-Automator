@@ -1,12 +1,12 @@
 def calculate_nssf(gross_salary):
-    """Calculate NSSF deduction (employee contribution) - 2025 rates"""
+    """Calculate NSSF deduction (employee contribution)"""
     tier1_limit = 8000
     tier2_limit = 72000
     rate = 0.06
     
     tier1 = min(gross_salary, tier1_limit) * rate  # Max: 480
     tier2 = max(0, min(gross_salary - tier1_limit, tier2_limit - tier1_limit)) * rate
-    return round(min(tier1 + tier2, 4320), 2)  # Cap at 4,320
+    return round(min((tier1 + tier2)/2, 2160), 2)  # Cap at 4,320
 
 def calculate_shif(basic_salary):
     """Calculate SHIF deduction - 2.75% of gross, minimum 300"""
@@ -18,7 +18,7 @@ def calculate_ahl(gross_salary):
     return round(gross_salary * 0.015, 2)
 
 def calculate_paye(taxable_pay):
-    """Calculate PAYE tax after personal relief - 2025 rates"""
+    """Calculate PAYE tax after personal relief """
     personal_relief = 2400
     
     if taxable_pay <= 24000:
