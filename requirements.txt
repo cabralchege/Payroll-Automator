@@ -6,3 +6,4 @@ WTForms==3.0.1
 ReportLab==4.0.4
 Werkzeug==2.3.7
 gunicorn==21.2.0
+python-dotenv

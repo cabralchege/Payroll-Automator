@@ -15,11 +15,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from payroll_calculator import calculate_payroll
 from generate_pdf import generate_payslip_pdf
 from models import db, Employee, Payroll, User
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Create Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'automated-payroll-key-2025'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///payroll.db'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 logging.basicConfig(level=logging.DEBUG)

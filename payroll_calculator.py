@@ -30,7 +30,7 @@ def calculate_paye(taxable_pay):
     elif taxable_pay <= 800000:
         tax = 2400+ (32333-24000) * 0.25 + (500000 - 32333) * 0.3 + (taxable_pay - 500000) * 0.325
     else:
-        tax = 2400 + (32333-2400) * 0.25 +(500000-32333) * 0.3 + (800000 - 500000)* 0.325+ (taxable_pay - 800000) * 0.35
+        tax = 2400 + (32333-2400) * 0.25 +(500000-32333) * 0.3 + (800000 - 500000)* 0.325 + (taxable_pay - 800000) * 0.35
     return round(max(tax - personal_relief, 0), 2)
 
 def calculate_payroll(employee_data, period):
