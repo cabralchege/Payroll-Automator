@@ -3,9 +3,16 @@
 
 # Virtual Environment
 venv/
+
+__pycache__/
 *.pyc
-__pycache__
+
 
 # Database
-payroll.db
+instance/
 *.db
+*.sqlite3
+
+.DS_Store
+.vscode/
+.idea/
